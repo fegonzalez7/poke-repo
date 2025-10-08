@@ -7,10 +7,9 @@ from pprint import pprint
 
 class Pokemon:
     current_dir = Path(__file__).parent
-    csv_path = current_dir / "utils/First30Pokemons.csv"
-    definition = """
-    Pocket Monster
-    """
+    csv_path = current_dir / "utils/pokedex.csv"
+    definition = "Pocket Monster"
+
     def __init__(
             self,
             pokemon_name: str,
@@ -22,14 +21,12 @@ class Pokemon:
         ) -> None:
         """
         Creates a basic pokemon
-
         Args:
             name (int): Pokemon's name in lowercase
             pokedex_num (int): Number in the national pokedex
             type (str): Main type of the pokemon
         Returns:
            A string representation of the Pokemon.
-
         Raises:
             ...
         """
@@ -39,13 +36,11 @@ class Pokemon:
         self.__color = color
         self.__sex = sex
         self.__level = level
-        self.__stats = Stats(Pokemon.csv_path, pokedex_num)
+        self.__stats = Stats(Pokemon.csv_path, pokedex_num, level)
         #* Changed to protected
         self._weaknesses = []
         self._resistances = []
         self._immunities = []
-
-    
 
     def attack(self) -> str:
         return f"{self.__name} is attacking!"
@@ -59,7 +54,6 @@ class Pokemon:
             self.__stats.sp_attack = round(self.__stats.sp_attack * 1.017)
             self.__stats.sp_defense = round(self.__stats.sp_defense * 1.016)
             self.__stats.speed = round(self.__stats.speed * 1.015)
-            
             print(f"{self.__name} leveled up to level {self.__level}!")
         else:
             print(f"{self.__name} is already max level!")
@@ -102,21 +96,46 @@ class Pokemon:
             raise AttributeError(f"Pokemon has no attribute '{attribute_name}'")
         
 class Stats():
-    def __init__(self, csv_path, pokedex_num):
+    def __init__(self, csv_path, pokedex_num, level=1):
         df = pd.read_csv(csv_path)
         row = df.loc[df['pokedex_number'] == pokedex_num]
+
+        #Bases
         self.base_hp = int(row['hp'].values[0])
         self.base_attack = int(row['attack'].values[0])
         self.base_defense = int(row['defense'].values[0])
         self.base_sp_attack = int(row['sp_atk'].values[0])
         self.base_sp_defense = int(row['sp_def'].values[0])
         self.base_speed = int(row['speed'].values[0])
+        
         self.hp = self.base_hp
         self.attack = self.base_attack
         self.defense = self.base_defense
         self.sp_attack = self.base_sp_attack
         self.sp_defense = self.base_sp_defense
         self.speed = self.base_speed
+
+        self.level = level
+    
+    def scale_with_level(self, level: int):
+        #Porcentaje de crecimiento: 2%
+        factor = 1 + 0.002 * (level - 1)
+        self.hp = round(self.base_hp * factor)
+        self.attack = round(self.base_attack * factor)
+        self.defense = round(self.base_defense * factor)
+        self.sp_attack = round(self.base_sp_attack * factor)
+        self.sp_defense = round(self.base_sp_defense * factor)
+        self.speed = round(self.base_speed * factor)
+
+    def apply_level(self, level):
+        #Fórmula: stat = base + (base * (level - 1) *0.05)
+        factor = 1 + (level - 1) *0.05 #Sube un 5% por nivel.
+        self.hp = round(self.base_hp * factor)
+        self.attack = round(self.base_attack * factor)
+        self.defense = round(self.base_defense * factor)
+        self.sp_attack = round(self.base_sp_attack * factor)
+        self.sp_defense = round(self.base_sp_defense * factor)
+        self.speed = round(self.base_speed * factor)
 
     def combat_stats(self, accuracy = "100%", evasion = "100%"):
         self.accuracy = accuracy
